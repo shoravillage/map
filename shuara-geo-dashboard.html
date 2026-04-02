@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>خريطة الشعراء الذكية | Smart Village Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  :root {
+    --primary: #0a4d68;
+    --secondary: #088395;
+    --accent: #05bfdb;
+    --gold: #f0c040;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #071e2b;
+    --glass: rgba(5, 191, 219, 0.08);
+    --glass-border: rgba(5, 191, 219, 0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--dark);
+    color: #e0f7fa;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, var(--dark) 0%, #0a3347 50%, var(--dark) 100%);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1000;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg, transparent, transparent 40px,
+      rgba(5,191,219,0.03) 40px, rgba(5,191,219,0.03) 41px
+    );
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 1;
+  }
+
+  .logo-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 20px rgba(5,191,219,0.4);
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%,100% { box-shadow: 0 4px 20px rgba(5,191,219,0.4); }
+    50% { box-shadow: 0 4px 30px rgba(5,191,219,0.8); }
+  }
+
+  .logo-text h1 {
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+  }
+
+  .logo-text p {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 400;
+    letter-spacing: 1px;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 10px;
+    z-index: 1;
+    flex-wrap: wrap;
+  }
+
+  .stat-badge {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 6px 14px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }
+
+  .stat-badge .num {
+    display: block;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-badge .lbl {
+    display: block;
+    font-size: 10px;
+    color: #90caf9;
+    margin-top: 2px;
+  }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    color: #22c55e;
+    z-index: 1;
+  }
+
+  .live-dot {
+    width: 8px; height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: blink 1.2s infinite;
+  }
+
+  @keyframes blink {
+    0%,100%{opacity:1} 50%{opacity:0.2}
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  .main {
+    display: flex;
+    height: calc(100vh - 80px);
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: 300px;
+    min-width: 260px;
+    background: linear-gradient(180deg, #071e2b 0%, #0a2d3d 100%);
+    border-left: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    z-index: 500;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 2px; }
+
+  .sidebar-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
+
+  /* Layer Toggles */
+  .layer-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    width: 100%;
+    text-align: right;
+    color: #b0c4d8;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+  }
+
+  .layer-btn:hover { background: var(--glass); border-color: var(--glass-border); }
+  .layer-btn.active { background: var(--glass); border-color: var(--glass-border); color: #fff; }
+
+  .layer-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .layer-info { flex: 1; }
+  .layer-name { font-size: 13px; font-weight: 600; }
+  .layer-count { font-size: 11px; color: #7a9bb0; margin-top: 1px; }
+
+  .toggle-switch {
+    width: 36px; height: 20px;
+    background: #1a3a4a;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-switch.on { background: var(--secondary); }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 14px; height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    transition: right 0.2s;
+  }
+
+  .toggle-switch.on::after { right: calc(100% - 17px); }
+
+  /* Stats mini cards */
+  .mini-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+
+  .mini-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .mini-card .icon { font-size: 20px; margin-bottom: 4px; }
+  .mini-card .val { font-size: 18px; font-weight: 900; color: #fff; }
+  .mini-card .label { font-size: 10px; color: #7a9bb0; margin-top: 2px; }
+
+  /* Progress bars */
+  .progress-item {
+    margin-bottom: 10px;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 5px;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  /* ===== MAP AREA ===== */
+  .map-container {
+    flex: 1;
+    position: relative;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Map overlay UI */
+  .map-overlay-top {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-chip {
+    background: rgba(7,30,43,0.9);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #90caf9;
+    font-family: 'Cairo', sans-serif;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .filter-chip:hover, .filter-chip.active {
+    background: var(--secondary);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* Popup custom styles */
+  .custom-popup {
+    font-family: 'Cairo', sans-serif;
+    direction: rtl;
+  }
+
+  .popup-header {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    margin: -14px -20px 12px;
+    padding: 12px 16px;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .popup-header h3 { font-size: 14px; color: #fff; font-weight: 700; }
+  .popup-header .type-badge {
+    display: inline-block;
+    font-size: 10px;
+    background: rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: #cce7ff;
+    margin-top: 3px;
+  }
+
+  .popup-body { font-size: 12px; }
+  .popup-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .popup-row .key { color: #7a9bb0; }
+  .popup-row .val { font-weight: 600; color: #fff; }
+
+  .status-pill {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .status-new { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .status-progress { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .status-done { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+  .popup-progress {
+    margin-top: 8px;
+  }
+
+  .popup-progress-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .popup-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--secondary), var(--accent));
+    border-radius: 4px;
+  }
+
+  /* Citizen report panel */
+  .report-panel {
+    position: absolute;
+    bottom: 62px;
+    left: 20px;
+    z-index: 1000;
+    background: rgba(7,30,43,0.95);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 16px;
+    width: 280px;
+    direction: rtl;
+  }
+
+  .report-panel h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .report-panel input,
+  .report-panel select,
+  .report-panel textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #e0f7fa;
+    font-family: 'Cairo', sans-serif;
+    font-size: 12px;
+    margin-bottom: 8px;
+    outline: none;
+    resize: none;
+  }
+
+  .report-panel input:focus,
+  .report-panel select:focus,
+  .report-panel textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .report-panel select option { background: #0a2d3d; }
+
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--secondary), var(--accent));
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .submit-btn:hover { opacity: 0.9; }
+
+  .toggle-report-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 10px 16px;
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(5,191,219,0.3);
+    white-space: nowrap;
+  }
+
+  /* Legend */
+  .map-legend {
+    position: absolute;
+    bottom: 20px;
+    right: 16px;
+    z-index: 1000;
+    background: rgba(7,30,43,0.88);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    border-radius: 9px;
+    padding: 7px 9px;
+    direction: rtl;
+    font-size: 10px;
+  }
+
+  .map-legend h5 {
+    color: var(--accent);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 3px;
+    color: #b0c4d8;
+    font-size: 10px;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(34,197,94,0.95);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Leaflet custom markers */
+  .custom-marker {
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    font-size: 18px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+    border: 2px solid rgba(255,255,255,0.3);
+    animation: marker-pop 0.4s ease;
+  }
+
+  @keyframes marker-pop {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  .leaflet-popup-content-wrapper {
+    background: #0a2d3d !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px !important;
+    color: #e0f7fa !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  }
+
+  .leaflet-popup-tip { background: #0a2d3d !important; }
+
+  .leaflet-popup-content {
+    margin: 14px 20px !important;
+    min-width: 220px;
+    direction: rtl;
+  }
+
+  /* Mobile */
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .header-stats { display: none; }
+    .report-panel { width: 240px; }
+    .toggle-report-btn { left: 16px; bottom: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- WELCOME SCREEN -->
+<div id="welcome-screen" style="
+  position:fixed;inset:0;z-index:8000;
+  background:linear-gradient(160deg,#071e2b 0%,#0a3347 50%,#071e2b 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:'Cairo',sans-serif;direction:rtl;padding:24px;
+  overflow-y:auto;
+">
+  <!-- bg pattern -->
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(5,191,219,0.02) 40px,rgba(5,191,219,0.02) 41px);pointer-events:none;"></div>
+
+  <!-- Logo -->
+  <div style="width:80px;height:80px;background:linear-gradient(135deg,#088395,#05bfdb);border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 8px 32px rgba(5,191,219,0.5);margin-bottom:18px;animation:pulse-glow 3s ease-in-out infinite;">🗺️</div>
+
+  <h1 style="font-size:24px;font-weight:900;color:#fff;margin-bottom:6px;text-align:center;">خريطة الشعراء الذكية</h1>
+  <p style="font-size:13px;color:#05bfdb;margin-bottom:6px;text-align:center;">الوحدة المحلية لقرية الشعراء — دمياط</p>
+  <p style="font-size:12px;color:#7a9bb0;margin-bottom:32px;text-align:center;">خدمتك همّنا — اختر ما تريد</p>
+
+  <!-- 3 BIG BUTTONS -->
+  <div style="width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;margin-bottom:28px;">
+
+    <!-- 1: مشروعات وإنجازات -->
+    <button onclick="welcomeGo('projects')" style="
+      width:100%;background:linear-gradient(135deg,rgba(5,191,219,0.15),rgba(8,131,149,0.25));
+      border:1px solid rgba(5,191,219,0.35);border-radius:16px;padding:18px 20px;
+      color:#fff;cursor:pointer;text-align:right;font-family:'Cairo',sans-serif;
+      display:flex;align-items:center;gap:16px;
+      transition:transform 0.15s;
+    " onpointerdown="this.style.transform='scale(0.97)'" onpointerup="this.style.transform='scale(1)'">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,#088395,#05bfdb);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🏗️</div>
+      <div>
+        <div style="font-size:16px;font-weight:800;">المشروعات والإنجازات</div>
+        <div style="font-size:12px;color:#7dd8e8;margin-top:3px;">شوف كل مشاريع التطوير في القرية</div>
+      </div>
+      <div style="margin-right:auto;font-size:20px;color:#05bfdb;">‹</div>
+    </button>
+
+    <!-- 2: خدمات حكومية -->
+    <button onclick="welcomeGo('services')" style="
+      width:100%;background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(34,197,94,0.2));
+      border:1px solid rgba(34,197,94,0.3);border-radius:16px;padding:18px 20px;
+      color:#fff;cursor:pointer;text-align:right;font-family:'Cairo',sans-serif;
+      display:flex;align-items:center;gap:16px;
+      transition:transform 0.15s;
+    " onpointerdown="this.style.transform='scale(0.97)'" onpointerup="this.style.transform='scale(1)'">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,#16a34a,#22c55e);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🏛️</div>
+      <div>
+        <div style="font-size:16px;font-weight:800;">الخدمات الحكومية</div>
+        <div style="font-size:12px;color:#86efac;margin-top:3px;">مدارس، صحة، مراكز الخدمة</div>
+      </div>
+      <div style="margin-right:auto;font-size:20px;color:#22c55e;">‹</div>
+    </button>
+
+    <!-- 3: أبلغ عن مشكلة -->
+    <button onclick="welcomeGo('report')" style="
+      width:100%;background:linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.2));
+      border:1px solid rgba(239,68,68,0.3);border-radius:16px;padding:18px 20px;
+      color:#fff;cursor:pointer;text-align:right;font-family:'Cairo',sans-serif;
+      display:flex;align-items:center;gap:16px;
+      transition:transform 0.15s;
+    " onpointerdown="this.style.transform='scale(0.97)'" onpointerup="this.style.transform='scale(1)'">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,#dc2626,#ef4444);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📢</div>
+      <div>
+        <div style="font-size:16px;font-weight:800;">أبلغ عن مشكلة</div>
+        <div style="font-size:12px;color:#fca5a5;margin-top:3px;">قمامة، إنارة، طرق، مياه</div>
+      </div>
+      <div style="margin-right:auto;font-size:20px;color:#ef4444;">‹</div>
+    </button>
+
+  </div>
+
+  <!-- explore all -->
+  <button onclick="closeWelcome()" style="
+    background:transparent;border:1px solid rgba(255,255,255,0.15);
+    border-radius:12px;padding:10px 28px;color:#7a9bb0;
+    font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer;
+  ">🗺️ استعراض الخريطة كاملة</button>
+
+  <!-- footer -->
+  <p style="position:absolute;bottom:16px;font-size:10px;color:#3a5568;text-align:center;">
+    الوحدة المحلية لقرية الشعراء • مركز دمياط
+  </p>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo-area">
+    <div class="logo-icon">🗺️</div>
+    <div class="logo-text">
+      <h1>خريطة الشعراء الذكية</h1>
+      <p>SMART VILLAGE GEOGRAPHIC DASHBOARD</p>
+    </div>
+  </div>
+
+  <div class="header-stats">
+    <div class="stat-badge">
+      <span class="num">49K</span>
+      <span class="lbl">مواطن</span>
+    </div>
+    <div class="stat-badge">
+      <span class="num" id="proj-count">12</span>
+      <span class="lbl">مشروع</span>
+    </div>
+    <div class="stat-badge">
+      <span class="num" id="complaint-count">8</span>
+      <span class="lbl">شكوى</span>
+    </div>
+    <div class="stat-badge">
+      <span class="num">28</span>
+      <span class="lbl">خدمة رقمية</span>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;z-index:1">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      بث مباشر
+    </div>
+    <button onclick="openAdmin()" style="background:linear-gradient(135deg,#0a4d68,#088395);border:1px solid rgba(5,191,219,0.4);border-radius:10px;padding:7px 14px;color:#fff;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 12px rgba(5,191,219,0.25);">⚙️ لوحة الإدارة</button>
+  </div>
+</header>
+
+<!-- LOGIN MODAL -->
+<div id="login-modal" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(145deg,#071e2b,#0a3347);border:1px solid rgba(5,191,219,0.25);border-radius:20px;padding:36px 32px;width:320px;text-align:center;font-family:'Cairo',sans-serif;direction:rtl;box-shadow:0 24px 60px rgba(0,0,0,0.7);">
+    <div style="width:60px;height:60px;background:linear-gradient(135deg,#088395,#05bfdb);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;box-shadow:0 6px 20px rgba(5,191,219,0.4);">🔐</div>
+    <h3 style="font-size:17px;font-weight:900;color:#fff;margin-bottom:6px;">منطقة محمية</h3>
+    <p style="font-size:12px;color:#7a9bb0;margin-bottom:22px;">لوحة الإدارة مخصصة للمسؤولين فقط</p>
+    <input id="login-input" type="password" placeholder="أدخلي كلمة المرور" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(5,191,219,0.25);border-radius:10px;padding:11px 14px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:14px;outline:none;text-align:center;margin-bottom:8px;letter-spacing:3px;">
+    <div id="login-error" style="display:none;color:#f87171;font-size:12px;margin-bottom:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:7px;">❌ كلمة المرور غير صحيحة</div>
+    <button onclick="submitLogin()" style="width:100%;background:linear-gradient(135deg,#088395,#05bfdb);border:none;border-radius:10px;padding:12px;color:#fff;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">دخول ⚙️</button>
+    <button onclick="closeLogin()" style="width:100%;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px;color:#7a9bb0;font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer;">إلغاء</button>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div id="admin-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);overflow-y:auto;">
+  <div style="max-width:800px;margin:30px auto;background:#071e2b;border:1px solid rgba(5,191,219,0.25);border-radius:20px;padding:0;font-family:'Cairo',sans-serif;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <!-- Modal Header -->
+    <div style="background:linear-gradient(135deg,#0a3347,#0a4d68);border-radius:20px 20px 0 0;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(5,191,219,0.2);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:42px;height:42px;background:linear-gradient(135deg,#088395,#05bfdb);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">⚙️</div>
+        <div>
+          <div style="font-size:17px;font-weight:900;color:#fff;">لوحة إدارة الخريطة</div>
+          <div style="font-size:11px;color:#05bfdb;">قرية الشعراء — وحدة محلية دمياط</div>
+        </div>
+      </div>
+      <button onclick="closeAdmin()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;width:36px;height:36px;color:#fff;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1px solid rgba(5,191,219,0.15);padding:0 24px;">
+      <button class="admin-tab active" id="tab-list" onclick="switchTab('list')" style="padding:12px 18px;background:none;border:none;border-bottom:2px solid #05bfdb;color:#05bfdb;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">📋 إدارة النقاط</button>
+      <button class="admin-tab" id="tab-add" onclick="switchTab('add')" style="padding:12px 18px;background:none;border:none;border-bottom:2px solid transparent;color:#7a9bb0;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">➕ إضافة جديد</button>
+    </div>
+
+    <!-- Tab: List -->
+    <div id="admin-list-tab" style="padding:20px 24px;">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <button onclick="adminFilter('all')" id="af-all" style="padding:5px 14px;border-radius:20px;background:#088395;border:none;color:#fff;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;">الكل</button>
+        <button onclick="adminFilter('project')" id="af-project" style="padding:5px 14px;border-radius:20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#b0c4d8;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;">🏗️ مشروعات</button>
+        <button onclick="adminFilter('complaint')" id="af-complaint" style="padding:5px 14px;border-radius:20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#b0c4d8;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;">⚠️ شكاوى</button>
+        <button onclick="adminFilter('service')" id="af-service" style="padding:5px 14px;border-radius:20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#b0c4d8;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;">🏛️ خدمات</button>
+        <button onclick="adminFilter('initiative')" id="af-initiative" style="padding:5px 14px;border-radius:20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#b0c4d8;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;">✨ مبادرات</button>
+      </div>
+      <div id="admin-items-list" style="display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;padding-left:4px;"></div>
+    </div>
+
+    <!-- Tab: Add New -->
+    <div id="admin-add-tab" style="display:none;padding:20px 24px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="grid-column:1/-1;">
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">اسم النقطة *</label>
+          <input id="add-name" placeholder="مثال: مشروع رصف شارع النصر" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:13px;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">النوع *</label>
+          <select id="add-type" onchange="updateAddEmoji()" style="width:100%;background:#0a2d3d;border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:13px;outline:none;">
+            <option value="project">🏗️ مشروع</option>
+            <option value="complaint">⚠️ شكوى / مشكلة</option>
+            <option value="service">🏛️ خدمة حكومية</option>
+            <option value="initiative">✨ مبادرة</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">الحالة *</label>
+          <select id="add-status" style="width:100%;background:#0a2d3d;border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:13px;outline:none;">
+            <option value="new">🔴 جديد</option>
+            <option value="progress">🟡 جاري التنفيذ</option>
+            <option value="done">🟢 مكتمل / تم الحل</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">الفئة</label>
+          <input id="add-category" placeholder="مثال: بنية تحتية" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:13px;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">الإيموجي</label>
+          <input id="add-emoji" placeholder="🏗️" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:20px;outline:none;text-align:center;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">نسبة الإنجاز % (للمشروعات)</label>
+          <input id="add-progress" type="number" min="0" max="100" placeholder="75" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:13px;outline:none;">
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">الوصف *</label>
+          <textarea id="add-desc" rows="2" placeholder="وصف مختصر للنقطة..." style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:13px;outline:none;resize:none;"></textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">خط العرض (Latitude)</label>
+          <input id="add-lat" placeholder="31.4220" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:13px;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#7a9bb0;display:block;margin-bottom:5px;">خط الطول (Longitude)</label>
+          <input id="add-lng" placeholder="31.8000" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(5,191,219,0.2);border-radius:8px;padding:9px 12px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:13px;outline:none;">
+        </div>
+        <div style="grid-column:1/-1;background:rgba(5,191,219,0.06);border:1px dashed rgba(5,191,219,0.2);border-radius:8px;padding:10px;font-size:11px;color:#7a9bb0;">
+          💡 <strong style="color:#05bfdb;">كيف تعرفي الإحداثيات؟</strong> افتحي Google Maps، اضغطي على أي موقع في القرية، هتظهر الأرقام في الأسفل — الأول هو خط العرض والثاني خط الطول
+        </div>
+      </div>
+      <button onclick="addNewPoint()" style="width:100%;margin-top:16px;background:linear-gradient(135deg,#088395,#05bfdb);border:none;border-radius:10px;padding:12px;color:#fff;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">➕ إضافة على الخريطة</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ تم إرسال بلاغك بنجاح!</div>
+
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- Layers -->
+    <div class="sidebar-section">
+      <div class="section-title">الطبقات</div>
+
+      <button class="layer-btn active" onclick="toggleLayer('projects', this)">
+        <div class="layer-icon" style="background:rgba(5,191,219,0.15)">🏗️</div>
+        <div class="layer-info">
+          <div class="layer-name">المشروعات</div>
+          <div class="layer-count">12 مشروع نشط</div>
+        </div>
+        <div class="toggle-switch on" id="toggle-projects"></div>
+      </button>
+
+      <button class="layer-btn active" onclick="toggleLayer('complaints', this)">
+        <div class="layer-icon" style="background:rgba(239,68,68,0.15)">⚠️</div>
+        <div class="layer-info">
+          <div class="layer-name">الشكاوى والمشكلات</div>
+          <div class="layer-count">8 بلاغ مسجل</div>
+        </div>
+        <div class="toggle-switch on" id="toggle-complaints"></div>
+      </button>
+
+      <button class="layer-btn active" onclick="toggleLayer('services', this)">
+        <div class="layer-icon" style="background:rgba(34,197,94,0.15)">🏛️</div>
+        <div class="layer-info">
+          <div class="layer-name">الخدمات الحكومية</div>
+          <div class="layer-count">15 منشأة</div>
+        </div>
+        <div class="toggle-switch on" id="toggle-services"></div>
+      </button>
+
+      <button class="layer-btn active" onclick="toggleLayer('initiatives', this)">
+        <div class="layer-icon" style="background:rgba(240,192,64,0.15)">✨</div>
+        <div class="layer-info">
+          <div class="layer-name">المبادرات والابتكار</div>
+          <div class="layer-count">5 مبادرة</div>
+        </div>
+        <div class="toggle-switch on" id="toggle-initiatives"></div>
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="mini-stats">
+      <div class="mini-card">
+        <div class="icon">✅</div>
+        <div class="val">7</div>
+        <div class="label">مشروع مكتمل</div>
+      </div>
+      <div class="mini-card">
+        <div class="icon">⚡</div>
+        <div class="val">5</div>
+        <div class="label">جاري التنفيذ</div>
+      </div>
+      <div class="mini-card">
+        <div class="icon">🛠️</div>
+        <div class="val">3</div>
+        <div class="label">شكوى جديدة</div>
+      </div>
+      <div class="mini-card">
+        <div class="icon">🔄</div>
+        <div class="val">5</div>
+        <div class="label">قيد المعالجة</div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="sidebar-section">
+      <div class="section-title">نسب التنفيذ</div>
+
+      <div class="progress-item">
+        <div class="progress-header">
+          <span style="font-size:12px;color:#b0c4d8">رصف الطرق الداخلية</span>
+          <span style="color:var(--accent);font-weight:700">85%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:85%;background:linear-gradient(90deg,#088395,#05bfdb)"></div>
+        </div>
+      </div>
+
+      <div class="progress-item">
+        <div class="progress-header">
+          <span style="font-size:12px;color:#b0c4d8">التحول الرقمي</span>
+          <span style="color:var(--accent);font-weight:700">62%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:62%;background:linear-gradient(90deg,#7c3aed,#a855f7)"></div>
+        </div>
+      </div>
+
+      <div class="progress-item">
+        <div class="progress-header">
+          <span style="font-size:12px;color:#b0c4d8">الطاقة الشمسية</span>
+          <span style="color:var(--accent);font-weight:700">40%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:40%;background:linear-gradient(90deg,#f59e0b,#fcd34d)"></div>
+        </div>
+      </div>
+
+      <div class="progress-item">
+        <div class="progress-header">
+          <span style="font-size:12px;color:#b0c4d8">قريتنا ملونة</span>
+          <span style="color:var(--accent);font-weight:700">100%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:100%;background:linear-gradient(90deg,#22c55e,#4ade80)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="sidebar-section">
+      <div class="section-title">آخر البلاغات</div>
+
+      <div id="activity-log" style="font-size:11px;">
+        <div style="padding:6px 0;border-bottom:1px solid var(--glass-border);display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-size:16px;">🗑️</span>
+          <div>
+            <div style="color:#e0f7fa;font-weight:600;">مشكلة قمامة - شارع النصر</div>
+            <div style="color:#7a9bb0;margin-top:2px;">منذ ساعتين • <span style="color:#fbbf24;">جاري المعالجة</span></div>
+          </div>
+        </div>
+        <div style="padding:6px 0;border-bottom:1px solid var(--glass-border);display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-size:16px;">💡</span>
+          <div>
+            <div style="color:#e0f7fa;font-weight:600;">عطل إنارة - المدخل الرئيسي</div>
+            <div style="color:#7a9bb0;margin-top:2px;">منذ 5 ساعات • <span style="color:#4ade80;">تم الحل</span></div>
+          </div>
+        </div>
+        <div style="padding:6px 0;display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-size:16px;">🚧</span>
+          <div>
+            <div style="color:#e0f7fa;font-weight:600;">حفرة في الطريق - ش. الجامع</div>
+            <div style="color:#7a9bb0;margin-top:2px;">أمس • <span style="color:#f87171;">جديد</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAP -->
+  <div class="map-container">
+    <div id="map"></div>
+
+    <!-- Filter chips -->
+    <div class="map-overlay-top">
+      <button class="filter-chip active" onclick="filterAll(this)">الكل</button>
+      <button class="filter-chip" onclick="filterType('project', this)">🏗️ مشروعات</button>
+      <button class="filter-chip" onclick="filterType('complaint', this)">⚠️ شكاوى</button>
+      <button class="filter-chip" onclick="filterType('service', this)">🏛️ خدمات</button>
+      <button class="filter-chip" onclick="filterType('initiative', this)">✨ مبادرات</button>
+    </div>
+
+    <!-- Citizen report toggle -->
+    <button class="toggle-report-btn" onclick="toggleReportPanel()">
+      📢 أبلغ عن مشكلة
+    </button>
+
+    <!-- Citizen report panel -->
+    <div class="report-panel" id="report-panel" style="display:none">
+      <h4>📢 بلاغ مواطن</h4>
+      <select id="report-type">
+        <option value="">نوع المشكلة</option>
+        <option value="garbage">🗑️ قمامة ونظافة</option>
+        <option value="light">💡 إنارة</option>
+        <option value="road">🚧 طرق وحفر</option>
+        <option value="water">💧 مياه وصرف</option>
+        <option value="other">📌 أخرى</option>
+      </select>
+      <input type="text" id="report-desc" placeholder="وصف المشكلة">
+      <input type="text" id="report-location" placeholder="الموقع التقريبي">
+      <button class="submit-btn" onclick="submitReport()">📤 إرسال البلاغ</button>
+    </div>
+
+    <!-- Legend (compact) -->
+    <div class="map-legend">
+      <h5>دليل الألوان</h5>
+      <div class="legend-item"><div class="legend-dot" style="background:#05bfdb"></div>مشروع</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>شكوى</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>خدمة</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f0c040"></div>مبادرة</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>جاري</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>مكتمل</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function initMap() {
+// =====================================================
+// INIT MAP - centered on Al-Shu'ara village, Damietta
+// =====================================================
+const map = L.map('map', {
+  center: [31.42, 31.80],
+  zoom: 14,
+  zoomControl: false
+});
+
+L.control.zoom({ position: 'topright' }).addTo(map);
+
+// Dark tile layer
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+// =====================================================
+// DATA - Village Points
+// =====================================================
+const allPoints = [
+  // PROJECTS
+  {
+    id: 1, type: 'project', layer: 'projects',
+    name: 'مشروع رصف الطرق الداخلية',
+    lat: 31.4230, lng: 31.8020,
+    category: 'بنية تحتية', status: 'progress', progress: 85,
+    desc: 'رصف وتطوير 3.5 كم من الطرق الداخلية بمواصفات قياسية',
+    color: '#05bfdb', emoji: '🏗️'
+  },
+  {
+    id: 2, type: 'project', layer: 'projects',
+    name: 'مشروع شبكة الصرف الصحي',
+    lat: 31.4180, lng: 31.7980,
+    category: 'بنية تحتية', status: 'done', progress: 100,
+    desc: 'إنشاء شبكة صرف صحي متكاملة تخدم 3000 أسرة',
+    color: '#a855f7', emoji: '🔧'
+  },
+  {
+    id: 3, type: 'project', layer: 'projects',
+    name: 'تطوير الحديقة العامة',
+    lat: 31.4250, lng: 31.7950,
+    category: 'تطوير عمراني', status: 'progress', progress: 60,
+    desc: 'تحديث وتطوير الحديقة العامة المركزية بمساحة 2 فدان',
+    color: '#22c55e', emoji: '🌳'
+  },
+  {
+    id: 4, type: 'project', layer: 'projects',
+    name: 'مشروع إنارة الشوارع',
+    lat: 31.4200, lng: 31.8050,
+    category: 'بنية تحتية', status: 'done', progress: 100,
+    desc: 'تركيب 250 عمود إنارة LED موفرة للطاقة',
+    color: '#a855f7', emoji: '💡'
+  },
+  {
+    id: 5, type: 'project', layer: 'projects',
+    name: 'تطوير منطقة المداخل',
+    lat: 31.4160, lng: 31.8010,
+    category: 'تطوير عمراني', status: 'new', progress: 15,
+    desc: 'تطوير وتجميل مداخل القرية بالنخيل والشعار الرسمي',
+    color: '#f59e0b', emoji: '🏙️'
+  },
+
+  // COMPLAINTS
+  {
+    id: 6, type: 'complaint', layer: 'complaints',
+    name: 'مشكلة قمامة - شارع النصر',
+    lat: 31.4215, lng: 31.7990,
+    category: 'نظافة', status: 'progress',
+    desc: 'تراكم قمامة في نقطة جمع غير منظمة',
+    color: '#f59e0b', emoji: '🗑️'
+  },
+  {
+    id: 7, type: 'complaint', layer: 'complaints',
+    name: 'عطل إنارة - شارع الجامع',
+    lat: 31.4235, lng: 31.8035,
+    category: 'إنارة', status: 'done',
+    desc: 'تم إصلاح 5 عواميد إنارة معطوبة',
+    color: '#22c55e', emoji: '💡'
+  },
+  {
+    id: 8, type: 'complaint', layer: 'complaints',
+    name: 'حفرة خطيرة - الطريق الرئيسي',
+    lat: 31.4195, lng: 31.7965,
+    category: 'طرق', status: 'new',
+    desc: 'حفرة كبيرة في الطريق الرئيسي تشكل خطراً على المرور',
+    color: '#ef4444', emoji: '🚧'
+  },
+  {
+    id: 9, type: 'complaint', layer: 'complaints',
+    name: 'كسر ماسورة مياه',
+    lat: 31.4240, lng: 31.7970,
+    category: 'مياه', status: 'progress',
+    desc: 'كسر في ماسورة المياه الرئيسية مع هدر يومي',
+    color: '#f59e0b', emoji: '💧'
+  },
+
+  // SERVICES
+  {
+    id: 10, type: 'service', layer: 'services',
+    name: 'الوحدة المحلية لقرية الشعراء',
+    lat: 31.4220, lng: 31.8005,
+    category: 'إدارة حكومية', status: 'done',
+    desc: 'المقر الرئيسي للوحدة المحلية | 28 موظف | 45 خدمة',
+    color: '#22c55e', emoji: '🏛️'
+  },
+  {
+    id: 11, type: 'service', layer: 'services',
+    name: 'الوحدة الصحية',
+    lat: 31.4205, lng: 31.8025,
+    category: 'صحة', status: 'done',
+    desc: 'تقدم خدمات صحية أولية لأكثر من 49,000 مواطن',
+    color: '#22c55e', emoji: '🏥'
+  },
+  {
+    id: 12, type: 'service', layer: 'services',
+    name: 'مدرسة الشعراء الابتدائية',
+    lat: 31.4245, lng: 31.8015,
+    category: 'تعليم', status: 'done',
+    desc: 'تستوعب 1200 طالب بمراحل الابتدائية والإعدادية',
+    color: '#22c55e', emoji: '🏫'
+  },
+  {
+    id: 13, type: 'service', layer: 'services',
+    name: 'مركز خدمة المواطنين الرقمي',
+    lat: 31.4212, lng: 31.7975,
+    category: 'خدمات رقمية', status: 'done',
+    desc: '28 خدمة رقمية متاحة | متوسط وقت الإنجاز 15 دقيقة',
+    color: '#22c55e', emoji: '💻'
+  },
+
+  // INITIATIVES
+  {
+    id: 14, type: 'initiative', layer: 'initiatives',
+    name: 'مبادرة قريتنا ملونة 🎨',
+    lat: 31.4228, lng: 31.7988,
+    category: 'ابتكار اجتماعي', status: 'done', progress: 100,
+    desc: 'تلوين وتجميل 45 جدار ولوحة فنية في شوارع القرية',
+    color: '#f0c040', emoji: '🎨'
+  },
+  {
+    id: 15, type: 'initiative', layer: 'initiatives',
+    name: 'الطاقة الشمسية ☀️',
+    lat: 31.4222, lng: 31.8038,
+    category: 'طاقة نظيفة', status: 'progress', progress: 40,
+    desc: 'تركيب ألواح شمسية على 12 مبنى حكومي لتوفير 30% من الكهرباء',
+    color: '#f0c040', emoji: '☀️'
+  },
+  {
+    id: 16, type: 'initiative', layer: 'initiatives',
+    name: 'صندوق القمامة الذكي ♻️',
+    lat: 31.4198, lng: 31.8000,
+    category: 'بيئة ذكية', status: 'progress', progress: 60,
+    desc: 'تركيب 20 صندوق قمامة ذكي بنظام تنبيه عند الامتلاء',
+    color: '#f0c040', emoji: '♻️'
+  },
+  {
+    id: 17, type: 'initiative', layer: 'initiatives',
+    name: 'تطبيق شارك 📱',
+    lat: 31.4232, lng: 31.7962,
+    category: 'مشاركة مجتمعية', status: 'done', progress: 100,
+    desc: 'تطبيق إلكتروني لمشاركة المواطنين في قرارات التطوير المحلي',
+    color: '#f0c040', emoji: '📱'
+  },
+];
+
+// =====================================================
+// CREATE MARKERS
+// =====================================================
+const markerGroups = {
+  projects: L.layerGroup(),
+  complaints: L.layerGroup(),
+  services: L.layerGroup(),
+  initiatives: L.layerGroup()
+};
+
+const allMarkers = [];
+
+function createMarkerIcon(point) {
+  const size = point.type === 'service' ? 38 : 40;
+  const bgColors = {
+    project: 'rgba(5,147,219,0.9)',
+    complaint: point.status === 'new' ? 'rgba(239,68,68,0.9)' : point.status === 'progress' ? 'rgba(245,158,11,0.9)' : 'rgba(34,197,94,0.9)',
+    service: 'rgba(34,197,94,0.9)',
+    initiative: 'rgba(240,192,64,0.9)'
+  };
+
+  return L.divIcon({
+    html: `<div class="custom-marker" style="
+      width:${size}px;height:${size}px;
+      background:${bgColors[point.type]};
+      backdrop-filter:blur(10px);
+    ">${point.emoji}</div>`,
+    className: '',
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2]
+  });
+}
+
+function getStatusLabel(status) {
+  const labels = { new: 'جديد', progress: 'جاري التنفيذ', done: 'تم الحل / مكتمل' };
+  const classes = { new: 'status-new', progress: 'status-progress', done: 'status-done' };
+  return `<span class="status-pill ${classes[status]}">${labels[status]}</span>`;
+}
+
+function buildPopup(point) {
+  const progressHtml = point.progress !== undefined ? `
+    <div class="popup-progress">
+      <div class="progress-header" style="display:flex;justify-content:space-between;font-size:11px;color:#7a9bb0;">
+        <span>نسبة الإنجاز</span><span style="color:var(--accent);font-weight:700">${point.progress}%</span>
+      </div>
+      <div class="popup-progress-bar">
+        <div class="popup-progress-fill" style="width:${point.progress}%"></div>
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="custom-popup">
+      <div class="popup-header">
+        <h3>${point.emoji} ${point.name}</h3>
+        <div class="type-badge">${point.category}</div>
+      </div>
+      <div class="popup-body">
+        <p style="color:#b0c4d8;margin-bottom:8px;line-height:1.5">${point.desc}</p>
+        <div class="popup-row">
+          <span class="key">الحالة:</span>
+          <span class="val">${getStatusLabel(point.status)}</span>
+        </div>
+        ${progressHtml}
+      </div>
+    </div>`;
+}
+
+allPoints.forEach(point => {
+  const marker = L.marker([point.lat, point.lng], { icon: createMarkerIcon(point) });
+  marker.bindPopup(buildPopup(point), { maxWidth: 280, className: 'custom-popup-wrap' });
+  marker._pointData = point;
+  markerGroups[point.layer].addLayer(marker);
+  allMarkers.push(marker);
+});
+
+Object.values(markerGroups).forEach(g => g.addTo(map));
+
+// =====================================================
+// LAYER TOGGLE
+// =====================================================
+const layerStates = { projects: true, complaints: true, services: true, initiatives: true };
+
+window.toggleLayer = function(layerName, btn) {
+  layerStates[layerName] = !layerStates[layerName];
+  const toggle = document.getElementById('toggle-' + layerName);
+
+  if (layerStates[layerName]) {
+    markerGroups[layerName].addTo(map);
+    toggle.classList.add('on');
+    btn.classList.add('active');
+  } else {
+    map.removeLayer(markerGroups[layerName]);
+    toggle.classList.remove('on');
+    btn.classList.remove('active');
+  }
+}
+
+// =====================================================
+// FILTER CHIPS
+// =====================================================
+window.filterAll = function(btn) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  allMarkers.forEach(m => {
+    const layer = markerGroups[m._pointData.layer];
+    if (!layer.hasLayer(m)) layer.addLayer(m);
+  });
+}
+
+window.filterType = function(type, btn) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+
+  allMarkers.forEach(m => {
+    const layer = markerGroups[m._pointData.layer];
+    if (m._pointData.type === type) {
+      if (!layer.hasLayer(m)) layer.addLayer(m);
+    } else {
+      if (layer.hasLayer(m)) layer.removeLayer(m);
+    }
+  });
+}
+
+// =====================================================
+// CITIZEN REPORT
+// =====================================================
+window.toggleReportPanel = function() {
+  const panel = document.getElementById('report-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+let reportCount = 0;
+
+window.submitReport = function() {
+  const type = document.getElementById('report-type').value;
+  const desc = document.getElementById('report-desc').value;
+  const loc = document.getElementById('report-location').value;
+
+  if (!type || !desc) {
+    alert('يرجى ملء نوع المشكلة والوصف');
+    return;
+  }
+
+  // Add new marker
+  const emojis = { garbage: '🗑️', light: '💡', road: '🚧', water: '💧', other: '📌' };
+  reportCount++;
+
+  const newPoint = {
+    id: 100 + reportCount,
+    type: 'complaint', layer: 'complaints',
+    name: `بلاغ مواطن - ${loc || 'موقع محدد'}`,
+    lat: 31.4220 + (Math.random() - 0.5) * 0.02,
+    lng: 31.8000 + (Math.random() - 0.5) * 0.02,
+    category: 'بلاغ جديد', status: 'new',
+    desc: desc,
+    color: '#ef4444',
+    emoji: emojis[type] || '📌'
+  };
+
+  const marker = L.marker([newPoint.lat, newPoint.lng], { icon: createMarkerIcon(newPoint) });
+  marker.bindPopup(buildPopup(newPoint), { maxWidth: 280 });
+  marker._pointData = newPoint;
+  markerGroups.complaints.addLayer(marker);
+  allMarkers.push(marker);
+  map.flyTo([newPoint.lat, newPoint.lng], 16);
+
+  // Update counter
+  const countEl = document.getElementById('complaint-count');
+  countEl.textContent = parseInt(countEl.textContent) + 1;
+
+  // Add to activity log
+  const log = document.getElementById('activity-log');
+  const newEntry = document.createElement('div');
+  newEntry.style.cssText = 'padding:6px 0;border-bottom:1px solid var(--glass-border);display:flex;gap:8px;align-items:flex-start;';
+  newEntry.innerHTML = `
+    <span style="font-size:16px;">${emojis[type]||'📌'}</span>
+    <div>
+      <div style="color:#e0f7fa;font-weight:600;">${desc.substring(0,30)}...</div>
+      <div style="color:#7a9bb0;margin-top:2px;">الآن • <span style="color:#f87171;">جديد</span></div>
+    </div>`;
+  log.prepend(newEntry);
+
+  // Reset form
+  document.getElementById('report-type').value = '';
+  document.getElementById('report-desc').value = '';
+  document.getElementById('report-location').value = '';
+  document.getElementById('report-panel').style.display = 'none';
+
+  // Show toast
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// =====================================================
+// ANIMATED PULSE CIRCLES (for active projects)
+// =====================================================
+function addPulseCircle(lat, lng, color) {
+  const circle = L.circle([lat, lng], {
+    radius: 80,
+    color: color,
+    fillColor: color,
+    fillOpacity: 0.1,
+    weight: 1,
+    opacity: 0.4
+  }).addTo(map);
+}
+
+// Add pulse circles for in-progress items
+allPoints.filter(p => p.status === 'progress').forEach(p => {
+  addPulseCircle(p.lat, p.lng, p.type === 'complaint' ? '#f59e0b' : '#05bfdb');
+});
+
+// Map click for mobile hint
+map.on('click', function(e) {
+  console.log('Clicked:', e.latlng);
+});
+
+// =====================================================
+// ADMIN PANEL
+// =====================================================
+let adminCurrentFilter = 'all';
+let nextId = 200;
+const ADMIN_PASSWORD = 'shuara2025';
+let adminUnlocked = false;
+
+window.openAdmin = function() {
+  if (adminUnlocked) {
+    document.getElementById('admin-modal').style.display = 'block';
+    renderAdminList();
+    return;
+  }
+  document.getElementById('login-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('login-input').focus(), 100);
+}
+
+window.closeAdmin = function() {
+  document.getElementById('admin-modal').style.display = 'none';
+}
+
+window.closeLogin = function() {
+  document.getElementById('login-modal').style.display = 'none';
+  document.getElementById('login-input').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+window.submitLogin = function() {
+  const val = document.getElementById('login-input').value;
+  if (val === ADMIN_PASSWORD) {
+    adminUnlocked = true;
+    document.getElementById('login-modal').style.display = 'none';
+    document.getElementById('login-input').value = '';
+    document.getElementById('admin-modal').style.display = 'block';
+    renderAdminList();
+  } else {
+    const err = document.getElementById('login-error');
+    err.style.display = 'block';
+    document.getElementById('login-input').value = '';
+    document.getElementById('login-input').focus();
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+
+// Enter key on password field
+document.getElementById('login-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') submitLogin();
+});
+
+window.closeAdmin = function() {
+  document.getElementById('admin-modal').style.display = 'none';
+}
+
+window.switchTab = function(tab) {
+  document.getElementById('admin-list-tab').style.display = tab === 'list' ? 'block' : 'none';
+  document.getElementById('admin-add-tab').style.display = tab === 'add' ? 'block' : 'none';
+  document.getElementById('tab-list').style.cssText = tab === 'list'
+    ? 'padding:12px 18px;background:none;border:none;border-bottom:2px solid #05bfdb;color:#05bfdb;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;'
+    : 'padding:12px 18px;background:none;border:none;border-bottom:2px solid transparent;color:#7a9bb0;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+  document.getElementById('tab-add').style.cssText = tab === 'add'
+    ? 'padding:12px 18px;background:none;border:none;border-bottom:2px solid #05bfdb;color:#05bfdb;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;'
+    : 'padding:12px 18px;background:none;border:none;border-bottom:2px solid transparent;color:#7a9bb0;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;';
+}
+
+window.adminFilter = function(type) {
+  adminCurrentFilter = type;
+  const btns = ['all','project','complaint','service','initiative'];
+  btns.forEach(b => {
+    const el = document.getElementById('af-' + b);
+    if(el) el.style.background = b === type ? '#088395' : 'rgba(255,255,255,0.07)';
+    if(el) el.style.color = b === type ? '#fff' : '#b0c4d8';
+    if(el) el.style.border = b === type ? 'none' : '1px solid rgba(255,255,255,0.1)';
+  });
+  renderAdminList();
+}
+
+const statusLabels = { new: '🔴 جديد', progress: '🟡 جاري', done: '🟢 مكتمل' };
+const typeLabels = { project: '🏗️ مشروع', complaint: '⚠️ شكوى', service: '🏛️ خدمة', initiative: '✨ مبادرة' };
+
+function renderAdminList() {
+  const container = document.getElementById('admin-items-list');
+  const items = allMarkers.filter(m => adminCurrentFilter === 'all' || m._pointData.type === adminCurrentFilter);
+
+  if(items.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:#7a9bb0;padding:30px;font-size:13px;">لا توجد عناصر</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(m => {
+    const p = m._pointData;
+    const progressHtml = p.progress !== undefined
+      ? `<div style="margin-top:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#7a9bb0;margin-bottom:3px;"><span>الإنجاز</span><span style="color:#05bfdb">${p.progress}%</span></div>
+          <div style="height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;">
+            <div style="height:100%;width:${p.progress}%;background:linear-gradient(90deg,#088395,#05bfdb);border-radius:2px;"></div>
+          </div>
+        </div>` : '';
+
+    return `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(5,191,219,0.12);border-radius:10px;padding:12px 14px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;">
+          <span style="font-size:22px;">${p.emoji}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px;">${p.name}</div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <span style="font-size:10px;background:rgba(5,191,219,0.1);border:1px solid rgba(5,191,219,0.2);padding:1px 7px;border-radius:8px;color:#05bfdb;">${typeLabels[p.type]}</span>
+              <span style="font-size:10px;color:#7a9bb0;">${p.category||''}</span>
+            </div>
+            ${progressHtml}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+          <select onchange="updatePointStatus(${p.id}, this.value)" style="background:#0a2d3d;border:1px solid rgba(5,191,219,0.2);border-radius:6px;padding:4px 8px;color:#e0f7fa;font-family:'Cairo',sans-serif;font-size:11px;cursor:pointer;outline:none;">
+            <option value="new" ${p.status==='new'?'selected':''}>🔴 جديد</option>
+            <option value="progress" ${p.status==='progress'?'selected':''}>🟡 جاري</option>
+            <option value="done" ${p.status==='done'?'selected':''}>🟢 مكتمل</option>
+          </select>
+          ${p.progress !== undefined ? `<input type="number" min="0" max="100" value="${p.progress}" onchange="updateProgress(${p.id}, this.value)" style="width:65px;background:#0a2d3d;border:1px solid rgba(5,191,219,0.2);border-radius:6px;padding:4px 8px;color:#05bfdb;font-family:'Cairo',sans-serif;font-size:11px;text-align:center;outline:none;" placeholder="%">` : ''}
+          <button onclick="deletePoint(${p.id})" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:4px 8px;color:#f87171;font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;">🗑️ حذف</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.updatePointStatus = function(id, newStatus) {
+  const marker = allMarkers.find(m => m._pointData.id === id);
+  if(!marker) return;
+  marker._pointData.status = newStatus;
+  marker.setIcon(createMarkerIcon(marker._pointData));
+  marker.setPopupContent(buildPopup(marker._pointData));
+  showToast('✅ تم تحديث الحالة بنجاح');
+}
+
+window.updateProgress = function(id, val) {
+  const marker = allMarkers.find(m => m._pointData.id === id);
+  if(!marker) return;
+  marker._pointData.progress = parseInt(val);
+  marker.setPopupContent(buildPopup(marker._pointData));
+  showToast('✅ تم تحديث نسبة الإنجاز');
+  renderAdminList();
+}
+
+window.deletePoint = function(id) {
+  if(!confirm('هل تريدي حذف هذه النقطة من الخريطة؟')) return;
+  const idx = allMarkers.findIndex(m => m._pointData.id === id);
+  if(idx === -1) return;
+  const marker = allMarkers[idx];
+  const layer = markerGroups[marker._pointData.layer];
+  layer.removeLayer(marker);
+  allMarkers.splice(idx, 1);
+  renderAdminList();
+  showToast('🗑️ تم حذف النقطة');
+}
+
+window.updateAddEmoji = function() {
+  const type = document.getElementById('add-type').value;
+  const defaults = { project:'🏗️', complaint:'⚠️', service:'🏛️', initiative:'✨' };
+  document.getElementById('add-emoji').value = defaults[type] || '📌';
+}
+
+window.addNewPoint = function() {
+  const name = document.getElementById('add-name').value.trim();
+  const type = document.getElementById('add-type').value;
+  const status = document.getElementById('add-status').value;
+  const category = document.getElementById('add-category').value.trim() || type;
+  const emoji = document.getElementById('add-emoji').value.trim() || '📌';
+  const desc = document.getElementById('add-desc').value.trim();
+  const lat = parseFloat(document.getElementById('add-lat').value) || 31.4220;
+  const lng = parseFloat(document.getElementById('add-lng').value) || 31.8000;
+  const progressVal = document.getElementById('add-progress').value;
+
+  if(!name || !desc) {
+    alert('يرجى ملء الاسم والوصف على الأقل');
+    return;
+  }
+
+  const layerMap = { project:'projects', complaint:'complaints', service:'services', initiative:'initiatives' };
+
+  const newPoint = {
+    id: nextId++,
+    type, layer: layerMap[type],
+    name, category, status, desc, emoji,
+    lat, lng,
+    color: '#05bfdb',
+    progress: progressVal !== '' ? parseInt(progressVal) : undefined
+  };
+
+  const marker = L.marker([lat, lng], { icon: createMarkerIcon(newPoint) });
+  marker.bindPopup(buildPopup(newPoint), { maxWidth: 280 });
+  marker._pointData = newPoint;
+  markerGroups[newPoint.layer].addLayer(marker);
+  allMarkers.push(marker);
+  map.flyTo([lat, lng], 15);
+
+  // Reset form
+  ['add-name','add-category','add-emoji','add-desc','add-lat','add-lng','add-progress'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('add-type').value = 'project';
+  document.getElementById('add-status').value = 'new';
+
+  showToast('✅ تمت الإضافة على الخريطة!');
+  switchTab('list');
+  adminCurrentFilter = 'all';
+  adminFilter('all');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Close modal on backdrop click
+document.getElementById('admin-modal').addEventListener('click', function(e) {
+  if(e.target === this) closeAdmin();
+});
+
+} // end initMap
+
+// =====================================================
+// WELCOME SCREEN
+// =====================================================
+window.closeWelcome = function() {
+  const ws = document.getElementById('welcome-screen');
+  ws.style.opacity = '0';
+  ws.style.transition = 'opacity 0.4s ease';
+  setTimeout(() => ws.style.display = 'none', 400);
+}
+
+window.welcomeGo = function(action) {
+  closeWelcome();
+  setTimeout(() => {
+    if (action === 'projects') {
+      filterType('project', document.querySelector('.filter-chip:nth-child(2)'));
+    } else if (action === 'services') {
+      filterType('service', document.querySelector('.filter-chip:nth-child(4)'));
+    } else if (action === 'report') {
+      document.getElementById('report-panel').style.display = 'block';
+    }
+  }, 450);
+}
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" onload="initMap()" onerror="loadLeafletFallback()"></script>
+<script>
+function loadLeafletFallback() {
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+  s.onload = initMap;
+  document.head.appendChild(s);
+}
+</script>
+</body>
+</html>
